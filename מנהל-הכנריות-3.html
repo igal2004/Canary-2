@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#FFE8A3" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="כנריות" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>מנהל הכנריות</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #FFF8F0; font-family: 'Heebo', sans-serif; direction: rtl; overflow-x: hidden; }
+    body { padding-bottom: env(safe-area-inset-bottom); }
+    input, textarea, button, select { font-family: 'Heebo', sans-serif; }
+    button { cursor: pointer; }
+    img { display: block; }
+
+    /* Screens */
+    .screen { display: none; min-height: 100vh; background: #FFF8F0; padding-bottom: 80px; }
+    .screen.active { display: block; }
+
+    /* Header */
+    .header {
+      padding: 28px 18px 24px;
+      background: linear-gradient(135deg, #FFE8A3 0%, #FFE5CC 55%, #E8DEFF 100%);
+      position: relative; overflow: hidden;
+    }
+    .header::before {
+      content: "🐦"; position: absolute; top: -20px; left: -10px;
+      font-size: 110px; opacity: 0.07; transform: scaleX(-1);
+    }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .header-sub { font-size: 11px; font-weight: 800; color: #A08878; text-transform: uppercase; letter-spacing: 1.5px; }
+    .header h1 { font-size: 28px; font-weight: 900; color: #2C1A0E; line-height: 1.1; margin: 6px 0 4px; }
+    .header-count { font-size: 13px; color: #6B4F3A; margin-top: 2px; }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #E8A800, #D97B3A);
+      color: #fff; border: none; border-radius: 16px; padding: 13px 22px;
+      font-weight: 800; font-size: 15px; box-shadow: 0 4px 14px rgba(232,168,0,0.35);
+    }
+    .btn-secondary {
+      background: #E8DEFF; color: #7B5EA7; border: none;
+      border-radius: 16px; padding: 13px 22px; font-weight: 700; font-size: 14px;
+    }
+    .btn-danger {
+      background: #FFD6E0; color: #D9547A; border: none;
+      border-radius: 16px; padding: 11px 18px; font-weight: 700; font-size: 13px;
+    }
+    .btn-back {
+      background: rgba(255,255,255,0.65); border: none; border-radius: 10px;
+      padding: 7px 14px; font-size: 13px; font-weight: 700; color: #2C1A0E;
+    }
+    .fab {
+      position: fixed; bottom: 26px; left: 22px;
+      width: 60px; height: 60px; border-radius: 30px;
+      background: linear-gradient(135deg, #E8A800, #D97B3A);
+      border: none; font-size: 28px; color: #fff;
+      box-shadow: 0 6px 22px rgba(232,168,0,0.5);
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+    }
+
+    /* Search */
+    .search-wrap { padding: 14px 16px 0; }
+    .search-input {
+      width: 100%; padding: 12px 14px; border-radius: 14px;
+      border: 1.5px solid #EDD9C8; background: #fff; color: #2C1A0E;
+      font-size: 15px; outline: none; direction: rtl;
+    }
+
+    /* Alert banner */
+    .alert-banner {
+      margin: 12px 16px 0; background: #FFD6E0; border-radius: 16px;
+      padding: 13px 16px; border: 1.5px solid #D9547A;
+    }
+    .alert-banner-title { font-weight: 900; color: #D9547A; font-size: 14px; margin-bottom: 4px; }
+    .alert-banner-item { font-size: 13px; color: #2C1A0E; font-weight: 600; margin-top: 3px; }
+
+    /* Card list */
+    .cards { padding: 14px 16px; }
+    .cage-card {
+      background: #FFFDF9; border-radius: 20px; margin-bottom: 14px;
+      overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 1.5px solid #EDD9C8; transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .cage-card:active { transform: scale(0.98); }
+    .cage-card-cover { height: 120px; overflow: hidden; position: relative; }
+    .cage-card-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .cage-card-cover-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.35));
+    }
+    .cage-card-cover-count {
+      position: absolute; bottom: 8px; left: 10px;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 700;
+    }
+    .cage-card-body { padding: 15px; }
+    .cage-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .cage-number-badge {
+      background: #FFE8A3; border-radius: 10px; padding: 4px 14px;
+      font-weight: 900; color: #2C1A0E; font-size: 17px;
+    }
+    .btn-edit-small {
+      background: #E8DEFF; color: #7B5EA7; border: none; border-radius: 10px;
+      padding: 6px 12px; font-weight: 800; font-size: 12px;
+    }
+    .bird-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .bird-chip { flex: 1; border-radius: 12px; padding: 8px 12px; }
+    .bird-chip.male { background: #FFE8A3; }
+    .bird-chip.female { background: #FFD6E0; }
+    .bird-chip-label { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .bird-chip.male .bird-chip-label { color: #E8A800; }
+    .bird-chip.female .bird-chip-label { color: #D9547A; }
+    .bird-chip-name { font-size: 14px; font-weight: 900; color: #2C1A0E; }
+    .bird-chip-breed { font-size: 11px; color: #6B4F3A; }
+    .dates-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .date-chip {
+      font-size: 11px; border-radius: 8px; padding: 3px 9px;
+      color: #2C1A0E; font-weight: 700;
+    }
+    .date-chip.laying { background: #FFE5CC; }
+    .date-chip.hatch { background: #D4F0E8; }
+
+    /* Status badge */
+    .status-badge { border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .status-badge.done { background: #D4F0E8; color: #3BAF8E; }
+    .status-badge.today { background: #FFE8A3; color: #E8A800; }
+    .status-badge.soon { background: #FFE5CC; color: #D97B3A; }
+    .status-badge.future { background: #E8DEFF; color: #7B5EA7; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 70px 20px; }
+    .empty-state .emoji { font-size: 72px; }
+    .empty-state h2 { font-size: 22px; font-weight: 900; color: #2C1A0E; margin: 14px 0 6px; }
+    .empty-state p { color: #A08878; font-size: 14px; margin-bottom: 26px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: #2C1A0E; color: #fff; border-radius: 16px;
+      padding: 13px 22px; font-size: 14px; font-weight: 700;
+      z-index: 9999; box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+      white-space: nowrap; display: none;
+    }
+
+    /* Form */
+    .form-header {
+      padding: 20px 18px 26px;
+      background: linear-gradient(135deg, #FFE8A3 0%, #FFE5CC 100%);
+    }
+    .form-header h1 { font-size: 24px; font-weight: 900; color: #2C1A0E; margin-top: 12px; }
+    .form-body { padding: 16px; max-width: 520px; margin: 0 auto; }
+    .section-card {
+      background: #FFFDF9; border-radius: 20px; padding: 18px;
+      margin-bottom: 14px; box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+      border: 1px solid #EDD9C8;
+    }
+    .section-card-title {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 800; color: #2C1A0E; font-size: 16px; margin-bottom: 14px;
+    }
+    label { font-size: 12px; font-weight: 800; color: #A08878; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+    .form-input {
+      width: 100%; padding: 11px 14px; border-radius: 14px;
+      border: 1.5px solid #EDD9C8; background: #fff; color: #2C1A0E;
+      font-size: 15px; outline: none; direction: rtl; margin-bottom: 10px;
+    }
+    .form-input:focus { border-color: #E8A800; }
+    textarea.form-input { resize: vertical; line-height: 1.6; min-height: 80px; }
+
+    /* Auto-calc box */
+    .auto-calc {
+      background: #D4F0E8; border-radius: 14px; padding: 14px; margin-top: 4px;
+    }
+    .auto-calc-title { font-size: 12px; font-weight: 800; color: #3BAF8E; text-transform: uppercase; margin-bottom: 8px; }
+    .auto-calc-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .auto-calc-item-label { font-size: 11px; color: #6B4F3A; font-weight: 700; }
+    .auto-calc-item-date { font-size: 14px; font-weight: 900; color: #2C1A0E; }
+    .auto-calc-item-note { font-size: 10px; color: #A08878; }
+
+    /* Photo grid */
+    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .photo-thumb { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; background: #EDD9C8; }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-remove {
+      position: absolute; top: 4px; left: 4px;
+      background: rgba(220,50,50,0.85); border: none; border-radius: 50%;
+      width: 22px; height: 22px; color: #fff; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-add-photo {
+      width: 100%; padding: 14px; background: #E8DEFF; color: #7B5EA7;
+      border: 2px dashed #7B5EA7; border-radius: 14px;
+      font-size: 15px; font-weight: 800;
+    }
+    .photo-hint { font-size: 11px; color: #A08878; text-align: center; margin-top: 6px; }
+
+    /* Detail view */
+    .detail-header {
+      padding: 20px 18px 28px;
+      background: linear-gradient(135deg, #FFE8A3 0%, #E8DEFF 100%);
+    }
+    .detail-cage-badge {
+      display: inline-block; background: #fff; border-radius: 14px;
+      padding: 6px 18px; font-size: 22px; font-weight: 900; color: #2C1A0E;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 14px;
+    }
+    .detail-body { padding: 16px; max-width: 520px; margin: 0 auto; }
+    .timeline-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .timeline-icon {
+      border-radius: 12px; width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .timeline-label { font-size: 11px; color: #A08878; font-weight: 700; }
+    .timeline-date { font-size: 15px; font-weight: 900; color: #2C1A0E; }
+    .action-row { display: flex; gap: 10px; }
+
+    /* Fullscreen photo */
+    #photo-fullscreen {
+      display: none; position: fixed; inset: 0; background: #000;
+      z-index: 9999; align-items: center; justify-content: center; flex-direction: column;
+    }
+    #photo-fullscreen.open { display: flex; }
+    #photo-fullscreen img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+    #photo-fullscreen .close-btn {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.2); border: none; border-radius: 10px;
+      padding: 8px 16px; color: #fff; font-size: 14px; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Fullscreen photo viewer -->
+<div id="photo-fullscreen">
+  <button class="close-btn" onclick="closeFullscreen()">✕ סגור</button>
+  <img id="fullscreen-img" src="" alt="" />
+</div>
+
+<!-- Hidden camera input -->
+<input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" />
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: LIST                          -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen active" id="screen-list">
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="header-sub">🐣 אפליקציית כנריות</div>
+        <h1>מנהל<br>הכלובים</h1>
+        <div class="header-count" id="cage-count">0 כלובים במעקב</div>
+      </div>
+      <button class="btn-primary" onclick="goAdd()" style="border-radius:18px;width:54px;height:54px;font-size:26px;padding:0;display:flex;align-items:center;justify-content:center;">+</button>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <input class="search-input" id="search-input" placeholder="🔍  חפש לפי כלוב, שם, זן..." oninput="renderList()" />
+  </div>
+
+  <div id="alert-zone"></div>
+  <div class="cards" id="cage-list"></div>
+
+  <button class="fab" onclick="goAdd()">+</button>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: ADD / EDIT                    -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-form">
+  <div class="form-header">
+    <button class="btn-back" onclick="goList()">→ חזור</button>
+    <h1 id="form-title">🐣 הוספת כלוב חדש</h1>
+  </div>
+
+  <div class="form-body">
+    <div class="section-card">
+      <div class="section-card-title"><span>🏠</span> פרטי כלוב</div>
+      <label>מספר כלוב *</label>
+      <input class="form-input" id="f-cage" placeholder='לדוגמה: A-01' />
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-title"><span>💛</span> כנרי זכר</div>
+      <label>שם / מזהה</label>
+      <input class="form-input" id="f-male-name" placeholder="לדוגמה: שמשון" />
+      <label>זן / גזע</label>
+      <input class="form-input" id="f-male-breed" placeholder="לדוגמה: יורקשייר, גלוסטר" />
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-title"><span>🌸</span> כנרית נקבה</div>
+      <label>שם / מזהה</label>
+      <input class="form-input" id="f-female-name" placeholder="לדוגמה: דבורה" />
+      <label>זן / גזע</label>
+      <input class="form-input" id="f-female-breed" placeholder="לדוגמה: בורדר, פריל" />
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-title"><span>📅</span> תאריכי גידול</div>
+      <label>תאריך הטלה</label>
+      <input class="form-input" type="date" id="f-laying" oninput="updateCalc()" />
+      <label>תחילת דגירה</label>
+      <input class="form-input" type="date" id="f-incubation" oninput="updateCalc()" />
+      <div class="auto-calc" id="auto-calc" style="display:none;">
+        <div class="auto-calc-title">📊 חישוב אוטומטי</div>
+        <div class="auto-calc-row">
+          <div>
+            <div class="auto-calc-item-label">בקיעה צפויה</div>
+            <div class="auto-calc-item-date" id="calc-hatch"></div>
+            <div class="auto-calc-item-note">+14 ימי דגירה</div>
+          </div>
+          <div>
+            <div class="auto-calc-item-label">עצמאות גוזל</div>
+            <div class="auto-calc-item-date" id="calc-chick"></div>
+            <div class="auto-calc-item-note">+21 ימים אחרי בקיעה</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-title"><span>📸</span> תמונות</div>
+      <div class="photo-grid" id="form-photo-grid"></div>
+      <button class="btn-add-photo" onclick="addPhoto()">📷 צלם / הוסף תמונה</button>
+      <div class="photo-hint">ניתן להוסיף מספר תמונות של הכנריות</div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-title"><span>📝</span> הערות</div>
+      <textarea class="form-input" id="f-notes" placeholder="תצפיות, מצב בריאות, ספירת ביצים..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn-secondary" onclick="goList()" style="flex:1;">ביטול</button>
+      <button class="btn-primary" onclick="saveCage()" style="flex:2;" id="save-btn">🐣 הוסף כלוב</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: DETAIL                        -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-detail">
+  <div class="detail-header">
+    <button class="btn-back" onclick="goList()">→ חזור לרשימה</button>
+    <div class="detail-cage-badge" id="d-cage-badge">כלוב —</div>
+  </div>
+
+  <div class="detail-body">
+    <!-- Photos -->
+    <div class="section-card" id="d-photo-section" style="display:none;">
+      <div class="section-card-title"><span>📸</span> תמונות</div>
+      <div class="photo-grid" id="d-photo-grid"></div>
+    </div>
+
+    <!-- Pair -->
+    <div class="section-card">
+      <div class="section-card-title"><span>🐦</span> זוג הרבייה</div>
+      <div class="bird-row">
+        <div class="bird-chip male">
+          <div class="bird-chip-label">💛 זכר</div>
+          <div class="bird-chip-name" id="d-male-name">—</div>
+          <div class="bird-chip-breed" id="d-male-breed"></div>
+        </div>
+        <div class="bird-chip female">
+          <div class="bird-chip-label">🌸 נקבה</div>
+          <div class="bird-chip-name" id="d-female-name">—</div>
+          <div class="bird-chip-breed" id="d-female-breed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section-card">
+      <div class="section-card-title"><span>📅</span> ציר הזמן</div>
+      <div id="d-timeline"></div>
+    </div>
+
+    <!-- Notes -->
+    <div class="section-card" id="d-notes-section" style="display:none;">
+      <div class="section-card-title"><span>📝</span> הערות</div>
+      <p id="d-notes" style="color:#6B4F3A;font-size:14px;line-height:1.7;"></p>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-danger" onclick="deleteCurrent()" style="flex:1;">🗑️ מחק</button>
+      <button class="btn-primary" onclick="editCurrent()" style="flex:2;">✏️ ערוך כלוב</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage ──
+function loadCages() {
+  try { return JSON.parse(localStorage.getItem('canary_cages') || '[]'); } catch { return []; }
+}
+function saveCages(cages) {
+  localStorage.setItem('canary_cages', JSON.stringify(cages));
+}
+let cages = loadCages();
+let editingId = null;
+let formPhotos = [];
+
+// ── Date helpers ──
+function addDays(dateStr, days) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr + 'T00:00:00');
+  return Math.ceil((target - today) / 86400000);
+}
+function statusBadge(dateStr, label) {
+  const d = daysUntil(dateStr);
+  if (d === null) return '';
+  let cls, text;
+  if (d < 0)       { cls = 'done';   text = label + ' ✓'; }
+  else if (d === 0){ cls = 'today';  text = label + ' היום!'; }
+  else if (d <= 3) { cls = 'soon';   text = label + ' בעוד ' + d + ' ימים'; }
+  else             { cls = 'future'; text = label + ' בעוד ' + d + ' ימים'; }
+  return `<span class="status-badge ${cls}">${text}</span>`;
+}
+
+// ── Navigation ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goList() { renderList(); showScreen('screen-list'); editingId = null; formPhotos = []; }
+function goAdd() {
+  editingId = null; formPhotos = [];
+  document.getElementById('form-title').textContent = '🐣 הוספת כלוב חדש';
+  document.getElementById('save-btn').textContent = '🐣 הוסף כלוב';
+  ['f-cage','f-male-name','f-male-breed','f-female-name','f-female-breed','f-notes'].forEach(id => document.getElementById(id).value = '');
+  ['f-laying','f-incubation'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('auto-calc').style.display = 'none';
+  renderFormPhotos();
+  showScreen('screen-form');
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2800);
+}
+
+// ── Auto calc ──
+function updateCalc() {
+  const inc = document.getElementById('f-incubation').value;
+  const laying = document.getElementById('f-laying').value;
+  if (!inc && laying) document.getElementById('f-incubation').value = addDays(laying, 1);
+  const incVal = document.getElementById('f-incubation').value;
+  if (!incVal) { document.getElementById('auto-calc').style.display = 'none'; return; }
+  const hatch = addDays(incVal, 14);
+  const chick = addDays(hatch, 21);
+  document.getElementById('calc-hatch').textContent = formatDate(hatch);
+  document.getElementById('calc-chick').textContent = formatDate(chick);
+  document.getElementById('auto-calc').style.display = 'block';
+}
+
+// ── Photos ──
+function addPhoto() {
+  const input = document.getElementById('camera-input');
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      formPhotos.push(ev.target.result);
+      renderFormPhotos();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  };
+  input.click();
+}
+function removePhoto(idx) {
+  formPhotos.splice(idx, 1);
+  renderFormPhotos();
+}
+function renderFormPhotos() {
+  const grid = document.getElementById('form-photo-grid');
+  grid.innerHTML = formPhotos.map((p, i) => `
+    <div class="photo-thumb">
+      <img src="${p}" alt="" />
+      <button class="photo-remove" onclick="removePhoto(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function openFullscreen(src) {
+  document.getElementById('fullscreen-img').src = src;
+  document.getElementById('photo-fullscreen').classList.add('open');
+}
+function closeFullscreen() {
+  document.getElementById('photo-fullscreen').classList.remove('open');
+}
+
+// ── Save cage ──
+function saveCage() {
+  const cageNum = document.getElementById('f-cage').value.trim();
+  if (!cageNum) { showToast('נא להזין מספר כלוב!'); return; }
+  const inc = document.getElementById('f-incubation').value;
+  const hatchDate = inc ? addDays(inc, 14) : '';
+  const chickDate = hatchDate ? addDays(hatchDate, 21) : '';
+  const entry = {
+    id: editingId || Date.now(),
+    cageNumber: cageNum,
+    maleName: document.getElementById('f-male-name').value,
+    maleBreed: document.getElementById('f-male-breed').value,
+    femaleName: document.getElementById('f-female-name').value,
+    femaleBreed: document.getElementById('f-female-breed').value,
+    layingDate: document.getElementById('f-laying').value,
+    incubationStart: inc,
+    hatchDate, chickDate,
+    notes: document.getElementById('f-notes').value,
+    photos: [...formPhotos],
+  };
+  if (editingId) {
+    cages = cages.map(c => c.id === editingId ? entry : c);
+    showToast('הכלוב עודכן בהצלחה! 🐦');
+  } else {
+    if (cages.find(c => c.cageNumber === cageNum)) { showToast('מספר כלוב זה כבר קיים!'); return; }
+    cages = [entry, ...cages];
+    showToast('כלוב חדש נוסף! 🐣');
+  }
+  saveCages(cages);
+  goList();
+}
+
+// ── Delete ──
+let currentDetailId = null;
+function deleteCurrent() {
+  if (!confirm('למחוק את רשומת הכלוב הזו?')) return;
+  cages = cages.filter(c => c.id !== currentDetailId);
+  saveCages(cages);
+  showToast('הכלוב נמחק.');
+  goList();
+}
+function editCurrent() {
+  const cage = cages.find(c => c.id === currentDetailId);
+  if (!cage) return;
+  editingId = cage.id;
+  formPhotos = [...(cage.photos || [])];
+  document.getElementById('form-title').textContent = '✏️ עריכת כלוב';
+  document.getElementById('save-btn').textContent = '💾 שמור שינויים';
+  document.getElementById('f-cage').value = cage.cageNumber;
+  document.getElementById('f-male-name').value = cage.maleName || '';
+  document.getElementById('f-male-breed').value = cage.maleBreed || '';
+  document.getElementById('f-female-name').value = cage.femaleName || '';
+  document.getElementById('f-female-breed').value = cage.femaleBreed || '';
+  document.getElementById('f-laying').value = cage.layingDate || '';
+  document.getElementById('f-incubation').value = cage.incubationStart || '';
+  document.getElementById('f-notes').value = cage.notes || '';
+  renderFormPhotos();
+  updateCalc();
+  showScreen('screen-form');
+}
+
+// ── Detail view ──
+function openDetail(id) {
+  const cage = cages.find(c => c.id === id);
+  if (!cage) return;
+  currentDetailId = id;
+  document.getElementById('d-cage-badge').textContent = 'כלוב ' + cage.cageNumber;
+  document.getElementById('d-male-name').textContent = cage.maleName || '—';
+  document.getElementById('d-male-breed').textContent = cage.maleBreed || '';
+  document.getElementById('d-female-name').textContent = cage.femaleName || '—';
+  document.getElementById('d-female-breed').textContent = cage.femaleBreed || '';
+
+  // Photos
+  const photos = cage.photos || [];
+  const photoSection = document.getElementById('d-photo-section');
+  if (photos.length > 0) {
+    photoSection.style.display = 'block';
+    document.getElementById('d-photo-grid').innerHTML = photos.map(p => `
+      <div class="photo-thumb" onclick="openFullscreen('${p}')">
+        <img src="${p}" alt="" />
+      </div>
+    `).join('');
+  } else { photoSection.style.display = 'none'; }
+
+  // Timeline
+  const timeline = [
+    { icon: '🥚', label: 'תאריך הטלה',   date: cage.layingDate,      bg: '#FFE8A3' },
+    { icon: '🌡️', label: 'תחילת דגירה',  date: cage.incubationStart, bg: '#FFE5CC' },
+    { icon: '🐣', label: 'בקיעה צפויה',  date: cage.hatchDate,       bg: '#D4F0E8' },
+    { icon: '🐦', label: 'עצמאות גוזל',  date: cage.chickDate,       bg: '#E8DEFF' },
+  ];
+  document.getElementById('d-timeline').innerHTML = timeline.map(t => `
+    <div class="timeline-item">
+      <div class="timeline-icon" style="background:${t.bg}">${t.icon}</div>
+      <div style="flex:1;">
+        <div class="timeline-label">${t.label}</div>
+        <div class="timeline-date">${formatDate(t.date)}</div>
+      </div>
+      ${t.date ? statusBadge(t.date, t.icon) : ''}
+    </div>
+  `).join('');
+
+  // Notes
+  const notesSection = document.getElementById('d-notes-section');
+  if (cage.notes) {
+    notesSection.style.display = 'block';
+    document.getElementById('d-notes').textContent = cage.notes;
+  } else { notesSection.style.display = 'none'; }
+
+  showScreen('screen-detail');
+}
+
+// ── Render list ──
+function renderList() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const filtered = cages.filter(c =>
+    c.cageNumber.toLowerCase().includes(search) ||
+    (c.maleName||'').toLowerCase().includes(search) ||
+    (c.maleBreed||'').toLowerCase().includes(search) ||
+    (c.femaleName||'').toLowerCase().includes(search) ||
+    (c.femaleBreed||'').toLowerCase().includes(search)
+  );
+
+  // Update count
+  document.getElementById('cage-count').textContent =
+    cages.length + ' כלוב' + (cages.length !== 1 ? 'ות' : '') + ' במעקב';
+
+  // Alerts
+  const urgent = cages.filter(c => {
+    const dh = daysUntil(c.hatchDate), dc = daysUntil(c.chickDate);
+    return (dh !== null && dh >= 0 && dh <= 2) || (dc !== null && dc >= 0 && dc <= 2);
+  });
+  const alertZone = document.getElementById('alert-zone');
+  if (urgent.length) {
+    alertZone.innerHTML = `
+      <div class="alert-banner">
+        <div class="alert-banner-title">⚡ אירועים קרובים!</div>
+        ${urgent.map(c => {
+          const dh = daysUntil(c.hatchDate), dc = daysUntil(c.chickDate);
+          return `<div class="alert-banner-item">כלוב ${c.cageNumber}:
+            ${dh !== null && dh >= 0 && dh <= 2 ? ' בקיעה בעוד ' + dh + ' ימים! 🐣' : ''}
+            ${dc !== null && dc >= 0 && dc <= 2 ? ' גוזל עצמאי בעוד ' + dc + ' ימים! 🐦' : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+  } else { alertZone.innerHTML = ''; }
+
+  // Cards
+  const list = document.getElementById('cage-list');
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🐦</div>
+        <h2>${search ? 'לא נמצאו כלובים' : 'עוד אין כלובים'}</h2>
+        <p>${search ? 'נסה חיפוש אחר' : 'הוסף את הכלוב הראשון שלך!'}</p>
+        ${!search ? '<button class="btn-primary" onclick="goAdd()">🐣 הוסף כלוב ראשון</button>' : ''}
+      </div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(cage => {
+    const photos = cage.photos || [];
+    const cover = photos[0];
+    const dh = daysUntil(cage.hatchDate);
+    const isUrgent = dh !== null && dh >= 0 && dh <= 3;
+    return `
+      <div class="cage-card" onclick="openDetail(${cage.id})"
+        style="border-color:${isUrgent ? '#D97B3A' : '#EDD9C8'}">
+        ${cover ? `
+          <div class="cage-card-cover">
+            <img src="${cover}" alt="" />
+            <div class="cage-card-cover-overlay"></div>
+            ${photos.length > 1 ? `<div class="cage-card-cover-count">+${photos.length-1} תמונות</div>` : ''}
+          </div>` : ''}
+        <div class="cage-card-body">
+          <div class="cage-card-top">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="cage-number-badge">כלוב ${cage.cageNumber}</div>
+              ${isUrgent ? '<span style="font-size:18px;">⚡</span>' : ''}
+            </div>
+            <button class="btn-edit-small" onclick="event.stopPropagation();currentDetailId=${cage.id};editCurrent()">✏️ ערוך</button>
+          </div>
+          <div class="bird-row">
+            <div class="bird-chip male">
+              <div class="bird-chip-label">💛 זכר</div>
+              <div class="bird-chip-name">${cage.maleName || cage.maleBreed || '—'}</div>
+              ${cage.maleName ? `<div class="bird-chip-breed">${cage.maleBreed||''}</div>` : ''}
+            </div>
+            <div class="bird-chip female">
+              <div class="bird-chip-label">🌸 נקבה</div>
+              <div class="bird-chip-name">${cage.femaleName || cage.femaleBreed || '—'}</div>
+              ${cage.femaleName ? `<div class="bird-chip-breed">${cage.femaleBreed||''}</div>` : ''}
+            </div>
+          </div>
+          ${(cage.layingDate || cage.hatchDate) ? `
+            <div class="dates-row">
+              ${cage.layingDate ? `<span class="date-chip laying">🥚 ${formatDate(cage.layingDate)}</span>` : ''}
+              ${cage.hatchDate ? `<span class="date-chip hatch">🐣 ${formatDate(cage.hatchDate)}</span>` : ''}
+              ${cage.hatchDate ? statusBadge(cage.hatchDate, 'בקיעה') : ''}
+            </div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Init ──
+renderList();
+</script>
+
+
+</body>
+</html>
